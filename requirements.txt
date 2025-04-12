@@ -9,7 +9,7 @@ gunicorn==21.2.0
 Pillow==10.1.0
 psycopg2-binary
 redis
-
+python-dotenv
 # Database dependencies
 mysqlclient==2.2.0  # Required for MySQL support
 PyMySQL==1.1.0      # Pure Python MySQL client
