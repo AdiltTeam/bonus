@@ -35,7 +35,7 @@ def load_user(user_id):
 # Giriş sayfası
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('login.html')
 
 # Giriş yapmak
 @app.route('/login')
