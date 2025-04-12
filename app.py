@@ -63,6 +63,11 @@ def load_user(user_id):
 def home():
     return render_template('index.html')
 
+@app.route('/register')
+def register():
+    return render_template('register.html')
+
+
 # Giriş yapmak
 @app.route('/login')
 def login():
