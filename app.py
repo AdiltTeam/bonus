@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from redis import Redis
+from sqlalchemy import text  # text metodunu əlavə edin
 import os
 
 # Flask tətbiqini yaratmaq
@@ -20,8 +21,8 @@ redis = Redis.from_url(app.config['REDIS_URL'])
 # Anasəhifə üçün route
 @app.route('/')
 def home():
-    # Verilənlər bazasından məlumatları alırıq (məsələn, istifadəçi məlumatları)
-    result = db.session.execute("SELECT * FROM users LIMIT 5").fetchall()
+    # SQLAlchemy ilə doğru SQL sorğusunu yazın
+    result = db.session.execute(text("SELECT * FROM users LIMIT 5")).fetchall()  # text() ilə düzəldildi
 
     # Redis ilə əlaqəli məlumatı alırıq (məsələn, sayğac dəyəri)
     counter = redis.get('counter')
