@@ -78,7 +78,12 @@ def login():
 def logout():
     redis_client.delete(f"user:{current_user.id}:logged_in")  # Redis'ten oturum bilgisini sil
     logout_user()
+
     return redirect(url_for('home'))
+@app.route('/register')
+def register():
+    return render_template('register.html')
+
 
 # Dashboard sayfası
 @app.route('/dashboard')
