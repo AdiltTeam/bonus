@@ -2,49 +2,39 @@ import os
 import logging
 import psycopg2
 from logging.handlers import RotatingFileHandler
-from flask import Flask, render_template, send_from_directory, jsonify
+from flask import Flask, render_template, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_user, logout_user, current_user, login_required
-from sqlalchemy import or_
-import time
-import redis
+from flask_login import LoginManager
 from redis.exceptions import ConnectionError as RedisConnectionError
-from datetime import datetime
+import redis
+import time
 from dotenv import load_dotenv
+
 load_dotenv()
 
-
-# Flask app creation
+# Flask app
 app = Flask(__name__)
 
-# Configure logging
+# Logging setup
 if not os.path.exists('logs'):
     os.mkdir('logs')
 file_handler = RotatingFileHandler('logs/customer_bonus.log', maxBytes=10240, backupCount=10)
-file_handler.setFormatter(logging.Formatter(
-    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-))
+file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
 file_handler.setLevel(logging.INFO)
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 app.logger.info('Customer Bonus startup')
 
-# App configuration
-app.config['SECRET_KEY'] = os.environ.get("FLASK_SECRET_KEY", "a secret key")
+# Configuration
+app.config['SECRET_KEY'] = os.environ.get("FLASK_SECRET_KEY", "qX8wX9JphFlGdrbCvqJVaZ4Z9dKPtxM5qpRPRGdz4TY")
 app.config['STATIC_FOLDER'] = 'static'
-
-# Set production configuration
 app.config['DEBUG'] = False
 app.config['ENV'] = 'production'
-
-# PostgreSQL connection configuration
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    'DATABASE_URL', 
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    'DATABASE_URL',
     'postgresql://adil_33bd_user:wCFx6qHuFSRmkQULnnQzIU8oEIbOeSLQ@dpg-cvt3lo15pdvs739f3pm0-a.oregon-postgres.render.com/adil_33bd'
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-# Configure SQLAlchemy connection pool
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
     "pool_recycle": 280,
@@ -53,16 +43,16 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "max_overflow": 5
 }
 
-# Initialize SQLAlchemy
+# Database
 db = SQLAlchemy(app)
 
-# Flask-Login configuration
+# Login
 login_manager = LoginManager(app)
-login_manager.login_view = "login"  # Define the default login view
+login_manager.login_view = "login"
 
-# Redis connection settings (optional)
+# Redis connection (optional)
 REDIS_RETRY_ATTEMPTS = 3
-REDIS_RETRY_DELAY = 2  # seconds
+REDIS_RETRY_DELAY = 2
 REDIS_CONFIG = {
     'socket_timeout': 5,
     'socket_connect_timeout': 5,
@@ -72,13 +62,10 @@ REDIS_CONFIG = {
     'decode_responses': True
 }
 
-# Only attempt Redis connection if Redis URL is provided
-redis_url = os.environ.get("REDIS_URL")
+redis_url = os.environ.get("REDIS_URL", "redis://default:RUHgvMb9yVvRSBhJAYk1UlYoJCBZTRqs@redis-12345.c233.eu-west-1-2.ec2.cloud.redislabs.com:6379")
 
 def connect_redis_with_retry():
-    """Attempt to connect to Redis with retry logic"""
     app.logger.info("Attempting to connect to Redis")
-    
     for attempt in range(REDIS_RETRY_ATTEMPTS):
         try:
             redis_client = redis.from_url(redis_url, **REDIS_CONFIG)
@@ -88,35 +75,27 @@ def connect_redis_with_retry():
         except RedisConnectionError as e:
             if attempt < REDIS_RETRY_ATTEMPTS - 1:
                 wait_time = REDIS_RETRY_DELAY * (attempt + 1)
-                app.logger.warning(f"Redis connection attempt {attempt + 1} failed: {str(e)}. Retrying in {wait_time}s...")
+                app.logger.warning(f"Redis attempt {attempt + 1} failed: {str(e)}. Retrying in {wait_time}s...")
                 time.sleep(wait_time)
             else:
-                app.logger.error(f"Failed to connect to Redis after {REDIS_RETRY_ATTEMPTS} attempts")
+                app.logger.error("Failed to connect to Redis after retries")
                 return None
         except Exception as e:
             app.logger.error(f"Unexpected Redis error: {str(e)}")
             return None
 
-# Try to initialize Redis connection if the URL exists (optional)
-if redis_url:
-    redis_client = connect_redis_with_retry()
-    if redis_client:
-        app.config['NOTIFICATIONS_ENABLED'] = True
-        app.config['REDIS_PUBSUB_OPTIONS'] = {
-            'channel_prefix': 'sse',
-            'retry_interval': 5000,
-            'max_retry_interval': 30000
-        }
-    else:
-        app.logger.warning("Redis connection failed, falling back to database-only notifications")
+redis_client = connect_redis_with_retry() if redis_url else None
+if redis_client:
+    app.config['NOTIFICATIONS_ENABLED'] = True
+    app.config['REDIS_PUBSUB_OPTIONS'] = {
+        'channel_prefix': 'sse',
+        'retry_interval': 5000,
+        'max_retry_interval': 30000
+    }
 else:
-    app.logger.info("No Redis URL found, Redis functionality will be skipped")
+    app.logger.warning("Redis connection failed, using DB-only notifications")
 
-# Import routes after app is created
-import routes  # noqa: F401
-import admin  # noqa: F401
-
-# Error handlers
+# Error pages
 @app.errorhandler(404)
 def not_found_error(error):
     app.logger.error(f'Page not found: {error}')
@@ -128,16 +107,15 @@ def internal_error(error):
     app.logger.error(f'Server Error: {error}')
     return render_template('errors/500.html'), 500
 
-# Static file handling for production
+# Serve static files
 @app.route('/static/<path:filename>')
 def serve_static(filename):
-    cache_timeout = 2592000  # 30 days
-    return send_from_directory(
-        app.static_folder or 'static',
-        filename,
-        cache_timeout=cache_timeout
-    )
+    return send_from_directory(app.static_folder, filename, cache_timeout=2592000)
 
-# Main entry point for the app
+# Import routes
+import routes  # noqa: F401
+import admin   # noqa: F401
+
+# Run app
 if __name__ == '__main__':
     app.run()
