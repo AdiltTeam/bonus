@@ -5,7 +5,9 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 import time
+import redis
 from sqlalchemy import create_engine
+from redis.exceptions import RedisConnectionError
 
 # Flask app creation
 app = Flask(__name__)
