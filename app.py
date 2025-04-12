@@ -10,6 +10,9 @@ import time
 import redis
 from redis.exceptions import ConnectionError as RedisConnectionError
 from datetime import datetime
+from dotenv import load_dotenv
+load_dotenv()
+
 
 # Flask app creation
 app = Flask(__name__)
