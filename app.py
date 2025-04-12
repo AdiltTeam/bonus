@@ -62,7 +62,8 @@ REDIS_CONFIG = {
     'decode_responses': True
 }
 
-redis_url = os.environ.get("REDIS_URL", "redis://default:RUHgvMb9yVvRSBhJAYk1UlYoJCBZTRqs@redis-12345.c233.eu-west-1-2.ec2.cloud.redislabs.com:6379")
+# Redis URL with endpoint, port, password and SSL
+redis_url = os.environ.get("REDIS_URL", "redis://AUauAAIjcDFlMzllYmIxYzY5MWQ0NTVmYTU4NGQ4MTY1ODc5MDUxN3AxMA:6379@dear-dory-18094.upstash.io:6379?ssl=True")
 
 def connect_redis_with_retry():
     app.logger.info("Attempting to connect to Redis")
