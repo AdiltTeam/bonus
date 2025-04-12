@@ -1,9 +1,17 @@
 from flask import Flask, render_template
+from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import FileHandler
-from sqlalchemy import text
 
+# Tətbiqi və DB-nı başlatmaq
 app = Flask(__name__)
+
+# PostgreSQL verilənlər bazası konfiqurasiyası (daha əvvəl verdiyiniz URL ilə)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://adil_33bd_user:wCFx6qHuFSRmkQULnnQzIU8oEIbOeSLQ@dpg-cvt3lo15pdvs739f3pm0-a/adil_33bd'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# db obyektini yaratmaq
+db = SQLAlchemy(app)
 
 # Log faylına məlumat yazmaq
 if not app.debug:
@@ -14,8 +22,9 @@ if not app.debug:
 @app.route('/')
 def home():
     try:
-        result = db.session.execute(text("SELECT * FROM users LIMIT 5")).fetchall()
-        return str(result)  # Əgər səhv yoxdur, nəticəni qaytarırıq
+        # Verilənlər bazasına sorğu göndərmək
+        result = db.session.execute("SELECT * FROM users LIMIT 5").fetchall()
+        return str(result)  # Nəticəni göstəririk
     except Exception as e:
         app.logger.error(f"Error occurred: {str(e)}")
         return render_template('errors/500.html', error=str(e)), 500
