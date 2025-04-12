@@ -1,140 +1,88 @@
-import os
-import logging
-import psycopg2
-from logging.handlers import RotatingFileHandler
-from flask import Flask, render_template, send_from_directory, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_user, logout_user, current_user, login_required
-from sqlalchemy import or_
-import time
-import redis
-from redis.exceptions import ConnectionError as RedisConnectionError
-from datetime import datetime
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
-# Flask app creation
+# Uygulama ve veritabanı yapılandırması
 app = Flask(__name__)
-
-# Configure logging
-if not os.path.exists('logs'):
-    os.mkdir('logs')
-file_handler = RotatingFileHandler('logs/customer_bonus.log', maxBytes=10240, backupCount=10)
-file_handler.setFormatter(logging.Formatter(
-    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-))
-file_handler.setLevel(logging.INFO)
-app.logger.addHandler(file_handler)
-app.logger.setLevel(logging.INFO)
-app.logger.info('Customer Bonus startup')
-
-# App configuration
-app.config['SECRET_KEY'] = os.environ.get("FLASK_SECRET_KEY", "a secret key")
-app.config['STATIC_FOLDER'] = 'static'
-
-# Set production configuration
-app.config['DEBUG'] = False
-app.config['ENV'] = 'production'
-
-# PostgreSQL connection configuration
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    'DATABASE_URL', 
-    'postgresql://adil_33bd_user:wCFx6qHuFSRmkQULnnQzIU8oEIbOeSLQ@dpg-cvt3lo15pdvs739f3pm0-a.oregon-postgres.render.com/adil_33bd'
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-# Configure SQLAlchemy connection pool
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_pre_ping": True,
-    "pool_recycle": 280,
-    "pool_timeout": 30,
-    "pool_size": 10,
-    "max_overflow": 5
-}
-
-# Initialize SQLAlchemy
+app.config['SECRET_KEY'] = 'your_secret_key'  # Güvenlik için bir anahtar
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://adil_33bd_user:wCFx6qHuFSRmkQULnnQzIU8oEIbOeSLQ@dpg-cvt3lo15pdvs739f3pm0-a/adil_33bd'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Flask-Login configuration
-login_manager = LoginManager(app)
-login_manager.login_view = "login"  # Define the default login view
+# Flask-Login yapılandırması
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"  # Giriş yapılmamışsa yönlendirecek sayfa
 
-# Redis connection settings (optional)
-REDIS_RETRY_ATTEMPTS = 3
-REDIS_RETRY_DELAY = 2  # seconds
-REDIS_CONFIG = {
-    'socket_timeout': 5,
-    'socket_connect_timeout': 5,
-    'socket_keepalive': True,
-    'health_check_interval': 30,
-    'retry_on_timeout': True,
-    'decode_responses': True
-}
+# Kullanıcı modelini tanımlıyoruz
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
 
-# Only attempt Redis connection if Redis URL is provided
-redis_url = os.environ.get("REDIS_URL")
+# Flask-Login'in kullanıcı yükleme fonksiyonu
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-def connect_redis_with_retry():
-    """Attempt to connect to Redis with retry logic"""
-    app.logger.info("Attempting to connect to Redis")
+# Ana sayfa
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+# Giriş sayfası
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        user = User.query.filter_by(username=username).first()
+        if user and user.password == password:  # Burada password doğrulaması basit tutuldu, daha güvenli bir yöntem kullanın!
+            login_user(user)
+            flash('Giriş başarılı!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Kullanıcı adı veya şifre yanlış!', 'danger')
     
-    for attempt in range(REDIS_RETRY_ATTEMPTS):
-        try:
-            redis_client = redis.from_url(redis_url, **REDIS_CONFIG)
-            redis_client.ping()
-            app.logger.info("Redis connection successful")
-            return redis_client
-        except RedisConnectionError as e:
-            if attempt < REDIS_RETRY_ATTEMPTS - 1:
-                wait_time = REDIS_RETRY_DELAY * (attempt + 1)
-                app.logger.warning(f"Redis connection attempt {attempt + 1} failed: {str(e)}. Retrying in {wait_time}s...")
-                time.sleep(wait_time)
-            else:
-                app.logger.error(f"Failed to connect to Redis after {REDIS_RETRY_ATTEMPTS} attempts")
-                return None
-        except Exception as e:
-            app.logger.error(f"Unexpected Redis error: {str(e)}")
-            return None
+    return render_template('login.html')
 
-# Try to initialize Redis connection if the URL exists (optional)
-if redis_url:
-    redis_client = connect_redis_with_retry()
-    if redis_client:
-        app.config['NOTIFICATIONS_ENABLED'] = True
-        app.config['REDIS_PUBSUB_OPTIONS'] = {
-            'channel_prefix': 'sse',
-            'retry_interval': 5000,
-            'max_retry_interval': 30000
-        }
-    else:
-        app.logger.warning("Redis connection failed, falling back to database-only notifications")
-else:
-    app.logger.info("No Redis URL found, Redis functionality will be skipped")
+# Dashboard sayfası, giriş yapmış kullanıcılar için
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html')
 
-# Import routes after app is created
-import routes  # noqa: F401
-import admin  # noqa: F401
+# Çıkış yapma fonksiyonu
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Çıkış yapıldı!', 'info')
+    return redirect(url_for('home'))
 
-# Error handlers
-@app.errorhandler(404)
-def not_found_error(error):
-    app.logger.error(f'Page not found: {error}')
-    return render_template('errors/404.html'), 404
+# Kullanıcı kayıt sayfası (opsiyonel)
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        if User.query.filter_by(username=username).first():
+            flash('Bu kullanıcı adı zaten alınmış!', 'warning')
+        else:
+            new_user = User(username=username, password=password)
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Hesap başarıyla oluşturuldu!', 'success')
+            return redirect(url_for('login'))
+    
+    return render_template('register.html')
 
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    app.logger.error(f'Server Error: {error}')
-    return render_template('errors/500.html'), 500
+# Veritabanını oluşturma (İlk defa çalıştırıldığında kullanılır)
+@app.before_first_request
+def create_tables():
+    db.create_all()
 
-# Static file handling for production
-@app.route('/static/<path:filename>')
-def serve_static(filename):
-    cache_timeout = 2592000  # 30 days
-    return send_from_directory(
-        app.static_folder or 'static',
-        filename,
-        cache_timeout=cache_timeout
-    )
-
-# Main entry point for the app
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
