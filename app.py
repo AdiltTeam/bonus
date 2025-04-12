@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import FileHandler
 
-# Tətbiqi və DB-nı başlatmaq
+# Tətbiqi və DB-ni başlatmaq
 app = Flask(__name__)
 
 # PostgreSQL verilənlər bazası konfiqurasiyası (daha əvvəl verdiyiniz URL ilə)
@@ -19,6 +19,7 @@ if not app.debug:
     file_handler.setLevel(logging.ERROR)
     app.logger.addHandler(file_handler)
 
+# Anasəhifə route'u
 @app.route('/')
 def home():
     try:
@@ -28,6 +29,11 @@ def home():
     except Exception as e:
         app.logger.error(f"Error occurred: {str(e)}")
         return render_template('errors/500.html', error=str(e)), 500
+
+# 'pano' adlı dashboard səhifəsini göstərən route
+@app.route('/pano')
+def pano():
+    return render_template('dashboard.html')  # dashboard.html şablonunu əlavə edin
 
 # 500 səhvini idarə etmək üçün handler
 @app.errorhandler(500)
