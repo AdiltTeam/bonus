@@ -1,9 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container text-center mt-5">
-    <h1>Page Not Found</h1>
-    <p>The page you are looking for does not exist.</p>
-    <p><a href="{{ url_for('dashboard') }}" class="btn btn-primary">Return to Dashboard</a></p>
-</div>
+<!-- templates/errors/404.html -->
+<!DOCTYPE html>
+<html>
+<head><title>404 - Tapılmadı</title></head>
+<body>
+    <h1>404</h1>
+    <p>Səhifə tapılmadı.</p>
+</body>
+</html>
+
 {% endblock %}
