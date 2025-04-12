@@ -4,6 +4,8 @@ import redis
 import os
 import psycopg2
 from psycopg2 import sql
+from flask import render_template
+from your_form_module import YourForm  # Form sınıfınızı içe aktarın
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -58,10 +60,10 @@ class User(UserMixin):
 def load_user(user_id):
     return User.get(user_id)
 
-# Anasayfa
 @app.route('/')
 def home():
-    return render_template('index.html')
+    form = YourForm()  # Formu oluşturun
+    return render_template('index.html', form=form)
 
 # Giriş yapmak
 @app.route('/login')
