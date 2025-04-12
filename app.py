@@ -62,8 +62,9 @@ def load_user(user_id):
 
 @app.route('/')
 def home():
-    form = YourForm()  # Formu oluşturun
+    form = LoginForm()  # LoginForm'u oluşturun
     return render_template('index.html', form=form)
+
 
 # Giriş yapmak
 @app.route('/login')
