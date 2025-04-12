@@ -1,0 +1,17 @@
+# Core dependencies
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-Admin==1.6.1
+Flask-WTF==1.2.1
+Werkzeug==3.0.1
+gunicorn==21.2.0
+Pillow==10.1.0
+
+# Database dependencies
+mysqlclient==2.2.0  # Required for MySQL support
+PyMySQL==1.1.0      # Pure Python MySQL client
+
+# Optional real-time notification support
+flask-sse; python_version >= "3.7"    # Optional: Server-Sent Events support
+redis; python_version >= "3.7"        # Optional: Required for SSE support
