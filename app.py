@@ -2,12 +2,11 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template, send_from_directory
-import redis
-from redis.exceptions import ConnectionError as RedisConnectionError
-from extensions import init_extensions, db, sse
+from flask_sqlalchemy import SQLAlchemy
 import time
+from sqlalchemy import create_engine
 
-# Create the app
+# Flask app creation
 app = Flask(__name__)
 
 # Configure logging
@@ -22,7 +21,7 @@ app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 app.logger.info('Customer Bonus startup')
 
-# Configure the app
+# App configuration
 app.config['SECRET_KEY'] = os.environ.get("FLASK_SECRET_KEY", "a secret key")
 app.config['STATIC_FOLDER'] = 'static'
 
@@ -30,7 +29,26 @@ app.config['STATIC_FOLDER'] = 'static'
 app.config['DEBUG'] = False
 app.config['ENV'] = 'production'
 
-# Redis connection configuration
+# PostgreSQL connection configuration
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    'DATABASE_URL', 
+    'postgresql://adil_33bd_user:wCFx6qHuFSRmkQULnnQzIU8oEIbOeSLQ@dpg-cvt3lo15pdvs739f3pm0-a.oregon-postgres.render.com/adil_33bd'
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Configure SQLAlchemy connection pool
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+    "pool_timeout": 30,
+    "pool_size": 10,
+    "max_overflow": 5
+}
+
+# Initialize SQLAlchemy
+db = SQLAlchemy(app)
+
+# Redis connection settings (optional)
 REDIS_RETRY_ATTEMPTS = 3
 REDIS_RETRY_DELAY = 2  # seconds
 REDIS_CONFIG = {
@@ -42,14 +60,8 @@ REDIS_CONFIG = {
     'decode_responses': True
 }
 
-# Configure Redis for real-time notifications (disabled by default)
-app.config['NOTIFICATIONS_ENABLED'] = False
-
-# Redis URL - Localhost istifadə edirik
-redis_url = "redis://localhost:6379"
-
-app.config["REDIS_URL"] = redis_url
-app.config["SSE_REDIS_URL"] = redis_url
+# Only attempt Redis connection if Redis URL is provided
+redis_url = os.environ.get("REDIS_URL")
 
 def connect_redis_with_retry():
     """Attempt to connect to Redis with retry logic"""
@@ -73,63 +85,24 @@ def connect_redis_with_retry():
             app.logger.error(f"Unexpected Redis error: {str(e)}")
             return None
 
-# Try to initialize Redis connection
-redis_client = connect_redis_with_retry()
-if redis_client:
-    app.config['NOTIFICATIONS_ENABLED'] = True
-    app.config['REDIS_PUBSUB_OPTIONS'] = {
-        'channel_prefix': 'sse',
-        'retry_interval': 5000,
-        'max_retry_interval': 30000
-    }
+# Try to initialize Redis connection if the URL exists (optional)
+if redis_url:
+    redis_client = connect_redis_with_retry()
+    if redis_client:
+        app.config['NOTIFICATIONS_ENABLED'] = True
+        app.config['REDIS_PUBSUB_OPTIONS'] = {
+            'channel_prefix': 'sse',
+            'retry_interval': 5000,
+            'max_retry_interval': 30000
+        }
+    else:
+        app.logger.warning("Redis connection failed, falling back to database-only notifications")
 else:
-    app.logger.warning("Redis connection failed, falling back to database-only notifications")
+    app.logger.info("No Redis URL found, Redis functionality will be skipped")
 
-# Configure SQLAlchemy database URL - Localhost istifadə edirik
-try:
-    mysql_host = "localhost"
-    mysql_user = os.environ.get('MYSQL_USER', 'root')
-    mysql_password = os.environ.get('MYSQL_PASSWORD', '')
-    mysql_database = os.environ.get('MYSQL_DATABASE', 'test')
-    mysql_port = os.environ.get('MYSQL_PORT', '3306')
-
-    if not all([mysql_user, mysql_password, mysql_database]):
-        raise ValueError("Missing required database configuration")
-
-    app.logger.info(f"Configuring database connection to {mysql_host}:{mysql_port}/{mysql_database}")
-
-    from urllib.parse import quote_plus
-    password = quote_plus(mysql_password)
-    username = quote_plus(mysql_user)
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        f"mysql+pymysql://{username}:{password}@{mysql_host}:{mysql_port}/{mysql_database}?ssl=false"
-    )
-
-    # Configure SQLAlchemy connection pool
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-        "pool_pre_ping": True,
-        "pool_recycle": 280,
-        "pool_timeout": 30,
-        "pool_size": 10,
-        "max_overflow": 5
-    }
-
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-except Exception as e:
-    app.logger.error(f"Database configuration error: {str(e)}")
-    raise
-
-# Configure static file handling for production
-@app.route('/static/<path:filename>')
-def serve_static(filename):
-    cache_timeout = 2592000  # 30 days
-    return send_from_directory(
-        app.static_folder or 'static',
-        filename,
-        cache_timeout=cache_timeout
-    )
+# Import routes after app is created
+import routes  # noqa: F401
+import admin  # noqa: F401
 
 # Error handlers
 @app.errorhandler(404)
@@ -143,14 +116,16 @@ def internal_error(error):
     app.logger.error(f'Server Error: {error}')
     return render_template('errors/500.html'), 500
 
-# Initialize extensions
-try:
-    init_extensions(app)
-    app.logger.info("Extensions initialized successfully")
-except Exception as e:
-    app.logger.error(f"Failed to initialize extensions: {str(e)}")
-    raise
+# Static file handling for production
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    cache_timeout = 2592000  # 30 days
+    return send_from_directory(
+        app.static_folder or 'static',
+        filename,
+        cache_timeout=cache_timeout
+    )
 
-# Import routes after app is created
-import routes  # noqa: F401
-import admin  # noqa: F401
+# Main entry point for the app
+if __name__ == '__main__':
+    app.run()
