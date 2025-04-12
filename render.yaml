@@ -1,0 +1,32 @@
+# Exported from Render on 2025-04-12T10:25:23Z
+services:
+- type: web
+  name: bonus
+  runtime: python
+  repo: https://github.com/AdiltTeam/bonus
+  plan: starter
+  region: oregon
+  buildCommand: pip install -r requirements.txt
+  startCommand: gunicorn app:app
+- type: web
+  name: bonus-1
+  runtime: python
+  repo: https://github.com/AdiltTeam/bonus
+  plan: starter
+  envVars:
+  - key: adil
+    sync: false
+  - key: adil_222
+    sync: false
+  region: oregon
+  buildCommand: pip install -r requirements.txt
+  startCommand: gunicorn app:app
+- type: web
+  name: melek
+  runtime: python
+  repo: https://github.com/AdiltTeam/melek
+  plan: starter
+  region: oregon
+  buildCommand: pip install -r requirements.txt
+  startCommand: gunicorn app:app
+version: "1"
