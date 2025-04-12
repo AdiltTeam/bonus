@@ -1,5 +1,6 @@
 import os
 import logging
+import psycopg2
 from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
