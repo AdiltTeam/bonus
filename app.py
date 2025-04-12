@@ -4,7 +4,6 @@ import redis
 import os
 import psycopg2
 from psycopg2 import sql
-from flask import render_template
 from your_form_module import YourForm  # Form sınıfınızı içe aktarın
 
 app = Flask(__name__)
