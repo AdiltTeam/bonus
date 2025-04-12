@@ -2,12 +2,14 @@ import os
 import logging
 import psycopg2
 from logging.handlers import RotatingFileHandler
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, login_user, logout_user, current_user, login_required
+from sqlalchemy import or_
 import time
 import redis
-from sqlalchemy import create_engine
-from redis.exceptions import RedisConnectionError
+from redis.exceptions import ConnectionError as RedisConnectionError
+from datetime import datetime
 
 # Flask app creation
 app = Flask(__name__)
@@ -50,6 +52,10 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 # Initialize SQLAlchemy
 db = SQLAlchemy(app)
+
+# Flask-Login configuration
+login_manager = LoginManager(app)
+login_manager.login_view = "login"  # Define the default login view
 
 # Redis connection settings (optional)
 REDIS_RETRY_ATTEMPTS = 3
