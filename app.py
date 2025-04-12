@@ -4,7 +4,8 @@ import redis
 import os
 import psycopg2
 from psycopg2 import sql
-from your_form_module import YourForm  # Form sınıfınızı içe aktarın
+from loginform import LoginForm  # loginform.py dosyasındaki LoginForm sınıfını içe aktarın
+
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
