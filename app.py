@@ -1,12 +1,13 @@
-import os
+from flask import Flask, render_template, request, redirect, url_for
 import face_recognition
 import cv2
-from flask import Flask, render_template, request, redirect, url_for
+import numpy as np
 from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 
-# Quraşdırılacaq olan şəkillər üçün qovluq
+# Üz tanıma üçün müvəqqəti saxlama yolu
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -17,45 +18,42 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        # Şəkli yükləyin
+        # Üz şəkli yüklənir
         if 'image' not in request.files:
             return redirect(request.url)
-        image = request.files['image']
-        
-        if image.filename == '':
+        file = request.files['image']
+        if file.filename == '':
             return redirect(request.url)
-        
-        if image and allowed_file(image.filename):
-            # Fayl adı təhlükəsiz bir şəkildə alınır
-            filename = secure_filename(image.filename)
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            image.save(filepath)
-            
-            # Yüklənmiş şəkili açın və üzləri tanıyın
+            file.save(filepath)
+
+            # Üz tanıma və şəkilin işlənməsi
             image = face_recognition.load_image_file(filepath)
             face_locations = face_recognition.face_locations(image)
 
-            # Əgər üz tapılıbsa, istifadəçiyə göstərmək üçün tanıma nəticəsini göndərin
-            if face_locations:
+            if len(face_locations) > 0:
+                # Əgər üz tapıldısa, formu göstər
                 return render_template('register_form.html', filename=filename)
             else:
-                return "Üz tapılmadı, şəkili yenidən çəkib cəhd edin."
-    return render_template('register.html')
+                return "Üz tapılmadı, yenidən cəhd edin."
+
+    return render_template('register_camera.html')
 
 @app.route('/submit_registration', methods=['POST'])
 def submit_registration():
+    # Ad və soyadın alınması
     first_name = request.form['first_name']
     last_name = request.form['last_name']
+    filename = request.form['filename']  # Yüklənmiş şəkil adı
 
-    # Burada məlumatları verilənlər bazasına və ya başqa bir yerə saxlamaq olar
-    return f"Qeydiyyatınız tamamlandı: {first_name} {last_name}"
+    # Verilənlər bazasına əlavə etmək və ya saxlamaq üçün kodu buraya əlavə edə bilərsiniz.
+    return f"Qeydiyyat tamamlandı: {first_name} {last_name}. Yüklənmiş şəkil: {filename}"
 
 if __name__ == '__main__':
     app.run(debug=True)
