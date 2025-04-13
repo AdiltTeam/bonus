@@ -1,19 +1,27 @@
-# Core dependencies
-Flask==3.0.0
-Flask-SQLAlchemy==3.1.1
-Flask-Login==0.6.3
-Flask-Admin==1.6.1
-Flask-WTF==1.2.1
-Werkzeug==3.0.1
-gunicorn==21.2.0
-Pillow==10.1.0
-psycopg2-binary
-redis
-python-dotenv
-# Database dependencies
-mysqlclient==2.2.0  # Required for MySQL support
-PyMySQL==1.1.0      # Pure Python MySQL client
+[project]
+name = "repl-nix-bonusmanager360"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
 
-# Optional real-time notification support
-flask-sse; python_version >= "3.7"    # Optional: Server-Sent Events support
-redis; python_version >= "3.7"        # Optional: Required for SSE support
+dependencies = [
+    "email-validator>=2.2.0",
+    "flask==2.2.5",
+    "psycopg2-binary>=2.9.10",
+    "pillow==9.5.0",
+    "flask-login==0.6.2",
+    "flask-wtf==1.1.1",
+    "wtforms==2.3.3",
+    "flask-sqlalchemy==3.0.3",
+    "sqlalchemy==2.0.16",
+    "flask-admin==1.6.1",
+    "werkzeug==2.2.3",
+    "mysql-connector-python>=9.1.0",
+    "pymysql>=1.1.1",
+    "flask-sse>=1.0.0",
+    "redis>=5.2.0",
+    "flask-bootstrap>=3.3.7.1",
+    "dlib==19.22.1",  # Dlib əlavə edilib
+    "cmake==3.21.1",  # CMake əlavə edilib
+    "face_recognition==1.3.0"  # Face Recognition əlavə edilib
+]
