@@ -3,26 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition App</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{% block title %}Qeydiyyat{% endblock %}</title>
 </head>
 <body>
-    <div class="container">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="{{ url_for('index') }}">Home</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('register') }}">Register</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('register_camera') }}">Register with Camera</a>
-                    </li>
-                </ul>
-            </div>
+    <header>
+        <h1>Saytımıza Xoş Gəlmisiniz</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Ana Səhifə</a> |
+            <a href="{{ url_for('register') }}">Qeydiyyat</a>
         </nav>
+    </header>
+
+    <div class="content">
+        {% block content %}{% endblock %}
     </div>
-    {% block content %}
-    {% endblock %}
+
+    <footer>
+        <p>&copy; 2025 Saytınız</p>
+    </footer>
 </body>
 </html>
