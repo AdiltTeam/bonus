@@ -3,10 +3,14 @@
 {% block title %}Qeydiyyat{% endblock %}
 
 {% block content %}
-    <h2>Qeydiyyat</h2>
-    <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data">
-        <label for="image">Şəkil yükləyin:</label>
-        <input type="file" name="image" id="image" required><br><br>
-        <input type="submit" value="Şəkil yükləyin">
-    </form>
+<h2>Qeydiyyat Forması</h2>
+<form method="POST">
+    <label for="name">Ad:</label><br>
+    <input type="text" id="name" name="name" required><br><br>
+
+    <label for="email">Email:</label><br>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <button type="submit">Qeydiyyat</button>
+</form>
 {% endblock %}
