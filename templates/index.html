@@ -1,21 +1,8 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Ana Səhifə{% endblock %}
 
 {% block content %}
-    <h2 class="mb-4">Login Panel</h2>
-
-    <form method="POST">
-        {{ form.hidden_tag() }}
-
-        <div class="mb-3">
-            {{ form.username.label(class="form-label") }}
-            {{ form.username(class="form-control") }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.password.label(class="form-label") }}
-            {{ form.password(class="form-control") }}
-        </div>
-
-        <button type="submit" class="btn btn-primary">Login</button>
-    </form>
+<h1>Salam, xoş gəldiniz!</h1>
+<p>Sadə Flask tətbiqinə xoş gəlmisiniz.</p>
 {% endblock %}
