@@ -1,59 +1,106 @@
-from flask import Flask, render_template, request, redirect, url_for
-import face_recognition
-import cv2
-import numpy as np
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, redirect, url_for
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+import redis
 import os
+import psycopg2
+from psycopg2 import sql
+from your_form_module import YourForm  # Form sınıfınızı içe aktarın
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
 
-# Üz tanıma üçün müvəqqəti saxlama yolu
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# Redis Bağlantısı
+try:
+    redis_client = redis.StrictRedis(
+        host='your_redis_host',  # Redis serverin adresini buraya yazın
+        port=6379,  # Redis portu
+        db=0,
+        ssl=False  # Eğer SSL kullanıyorsanız True yapın
+    )
+    print("Redis'e bağlantı sağlandı!")
+except Exception as e:
+    print(f"Redis bağlantı hatası: {e}")
 
-# İcazə verilən fayl növləri
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+# PostgreSQL Bağlantısı
+try:
+    postgres_conn = psycopg2.connect(
+        dbname="adil_33bd", 
+        user="adil_33bd_user", 
+        password="wCFx6qHuFSRmkQULnnQzIU8oEIbOeSLQ", 
+        host="dpg-cvt3lo15pdvs739f3pm0-a", 
+        port="5432"
+    )
+    print("PostgreSQL'e bağlantı sağlandı!")
+except Exception as e:
+    print(f"PostgreSQL bağlantı hatası: {e}")
 
-# Fayl uzantısını yoxlamaq üçün funksiya
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# Flask-Login setup
+login_manager = LoginManager()
+login_manager.init_app(app)
 
-@app.route('/register', methods=['GET', 'POST'])
+# Kullanıcı sınıfı
+class User(UserMixin):
+    def __init__(self, id):
+        self.id = id
+
+    @staticmethod
+    def get(user_id):
+        # PostgreSQL üzerinden kullanıcıyı almak
+        with postgres_conn.cursor() as cursor:
+            query = sql.SQL("SELECT id, username FROM users WHERE id = %s")
+            cursor.execute(query, [user_id])
+            user = cursor.fetchone()
+            if user:
+                return User(user[0])
+            return None
+
+# Kullanıcı yükleyicisi
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get(user_id)
+
+@app.route('/')
+def home():
+    form = YourForm()  # Formu oluşturun
+    return render_template('index.html', form=form)
+
+# Giriş yapmak
+@app.route('/login')
+def login():
+    user = User('1')  # Test amacıyla sabit id kullanıyoruz
+    login_user(user)
+    # Redis'te oturum bilgilerini saklama
+    redis_client.set(f"user:{user.id}:logged_in", True)
+    return redirect(url_for('dashboard'))
+
+# Çıkış yapmak
+@app.route('/logout')
+@login_required
+def logout():
+    redis_client.delete(f"user:{current_user.id}:logged_in")  # Redis'ten oturum bilgisini sil
+    logout_user()
+
+    return redirect(url_for('home'))
+@app.route('/register')
 def register():
-    if request.method == 'POST':
-        # Üz şəkli yüklənir
-        if 'image' not in request.files:
-            return redirect(request.url)
-        file = request.files['image']
-        if file.filename == '':
-            return redirect(request.url)
+    return render_template('register.html')
 
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
 
-            # Üz tanıma və şəkilin işlənməsi
-            image = face_recognition.load_image_file(filepath)
-            face_locations = face_recognition.face_locations(image)
+# Dashboard sayfası
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html')
 
-            if len(face_locations) > 0:
-                # Əgər üz tapıldısa, formu göstər
-                return render_template('register_form.html', filename=filename)
-            else:
-                return "Üz tapılmadı, yenidən cəhd edin."
+# Hata 404
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('errors/404.html'), 404
 
-    return render_template('register_camera.html')
-
-@app.route('/submit_registration', methods=['POST'])
-def submit_registration():
-    # Ad və soyadın alınması
-    first_name = request.form['first_name']
-    last_name = request.form['last_name']
-    filename = request.form['filename']  # Yüklənmiş şəkil adı
-
-    # Verilənlər bazasına əlavə etmək və ya saxlamaq üçün kodu buraya əlavə edə bilərsiniz.
-    return f"Qeydiyyat tamamlandı: {first_name} {last_name}. Yüklənmiş şəkil: {filename}"
+# Hata 500
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('errors/500.html'), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
