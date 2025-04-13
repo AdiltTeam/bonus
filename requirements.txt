@@ -16,5 +16,8 @@ flask-sse>=1.0.0
 redis>=5.2.0
 flask-bootstrap>=3.3.7.1
 cmake
+pillow==9.5.0
+dlib==19.24.2
+
 
 
