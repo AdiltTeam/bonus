@@ -1,58 +1,54 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Qeydiyyat{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h2 class="mb-4">Register</h2>
-        <form method="POST" action="{{ url_for('register') }}">
-            {{ form.hidden_tag() }}
-            <div class="mb-3">
-                {{ form.name.label(class="form-label") }}
-                {{ form.name(class="form-control") }}
-                {% for error in form.name.errors %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="mb-3">
-                {{ form.surname.label(class="form-label") }}
-                {{ form.surname(class="form-control") }}
-                {% for error in form.surname.errors %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="mb-3">
-                {{ form.customer_code.label(class="form-label") }}
-                {{ form.customer_code(class="form-control") }}
-                {% for error in form.customer_code.errors %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="mb-3">
-                {{ form.email.label(class="form-label") }}
-                {{ form.email(class="form-control") }}
-                {% for error in form.email.errors %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="mb-3">
-                {{ form.password.label(class="form-label") }}
-                {{ form.password(class="form-control") }}
-                {% for error in form.password.errors %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="mb-3">
-                {{ form.password2.label(class="form-label") }}
-                {{ form.password2(class="form-control") }}
-                {% for error in form.password2.errors %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="mb-3">
-                {{ form.submit(class="btn btn-primary") }}
-            </div>
-        </form>
-        <p>Already have an account? <a href="{{ url_for('login') }}">Click to Login!</a></p>
-    </div>
-</div>
+    <h2>Qeydiyyat</h2>
+    <form action="/register" method="post" enctype="multipart/form-data">
+        <video id="video" width="640" height="480" autoplay></video>
+        <button type="button" onclick="takePicture()">Şəkil çək</button>
+
+        <input type="file" name="image" id="image" style="display: none;">
+        <input type="submit" value="Yükle" style="display: none;" id="submit-btn">
+    </form>
+
+    <form action="/submit_registration" method="POST">
+        <label for="first_name">Ad:</label>
+        <input type="text" id="first_name" name="first_name" required><br><br>
+
+        <label for="last_name">Soyad:</label>
+        <input type="text" id="last_name" name="last_name" required><br><br>
+
+        <input type="submit" value="Qeydiyyat">
+    </form>
+
+    <script>
+        var video = document.getElementById('video');
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function (stream) {
+                    video.srcObject = stream;
+                });
+        }
+
+        function takePicture() {
+            var canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            var dataUrl = canvas.toDataURL('image/png');
+            var imageInput = document.getElementById('image');
+            var submitBtn = document.getElementById('submit-btn');
+
+            // Şəkli formaya əlavə et
+            var base64Data = dataUrl.split(',')[1];
+            var blob = fetch(`data:image/png;base64,${base64Data}`).then(res => res.blob());
+            blob.then(b => {
+                var file = new File([b], 'image.png', { type: 'image/png' });
+                var formData = new FormData();
+                formData.append('image', file);
+                document.getElementById('image-form').submit();
+            });
+        }
+    </script>
 {% endblock %}
