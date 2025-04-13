@@ -1,54 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}Qeydiyyat{% endblock %}
+{% block title %}Ana Səhifə{% endblock %}
 
 {% block content %}
-    <h2>Qeydiyyat</h2>
-    <form action="/register" method="post" enctype="multipart/form-data">
-        <video id="video" width="640" height="480" autoplay></video>
-        <button type="button" onclick="takePicture()">Şəkil çək</button>
-
-        <input type="file" name="image" id="image" style="display: none;">
-        <input type="submit" value="Yükle" style="display: none;" id="submit-btn">
-    </form>
-
-    <form action="/submit_registration" method="POST">
-        <label for="first_name">Ad:</label>
-        <input type="text" id="first_name" name="first_name" required><br><br>
-
-        <label for="last_name">Soyad:</label>
-        <input type="text" id="last_name" name="last_name" required><br><br>
-
-        <input type="submit" value="Qeydiyyat">
-    </form>
-
-    <script>
-        var video = document.getElementById('video');
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function (stream) {
-                    video.srcObject = stream;
-                });
-        }
-
-        function takePicture() {
-            var canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            var dataUrl = canvas.toDataURL('image/png');
-            var imageInput = document.getElementById('image');
-            var submitBtn = document.getElementById('submit-btn');
-
-            // Şəkli formaya əlavə et
-            var base64Data = dataUrl.split(',')[1];
-            var blob = fetch(`data:image/png;base64,${base64Data}`).then(res => res.blob());
-            blob.then(b => {
-                var file = new File([b], 'image.png', { type: 'image/png' });
-                var formData = new FormData();
-                formData.append('image', file);
-                document.getElementById('image-form').submit();
-            });
-        }
-    </script>
+    <h2>Saytımıza Xoş Gəlmisiniz!</h2>
+    <p>Üz tanıma və qeydiyyat funksiyası üçün aşağıdakı linkdən istifadə edə bilərsiniz.</p>
+    <a href="{{ url_for('register') }}" class="btn btn-primary">Qeydiyyat</a>
 {% endblock %}
