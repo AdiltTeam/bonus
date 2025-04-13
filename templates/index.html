@@ -1,29 +1,21 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h2 class="mb-4">Sign In</h2>
-        <form method="POST" action="{{ url_for('login') }}">
-            {{ form.hidden_tag() }}
-            <div class="mb-3">
-                {{ form.identifier.label(class="form-label") }}
-                {{ form.identifier(class="form-control") }}
-            </div>
-            <div class="mb-3">
-                {{ form.password.label(class="form-label") }}
-                <div class="input-group">
-                    {{ form.password(class="form-control", id="password") }}
-                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                        <i class="bi bi-eye-slash"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="mb-3">
-                {{ form.submit(class="btn btn-primary") }}
-            </div>
-        </form>
-        <p>New User? <a href="{{ url_for('register') }}">Click to Register!</a></p>
-    </div>
-</div>
+    <h2 class="mb-4">Login Panel</h2>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+            {{ form.username.label(class="form-label") }}
+            {{ form.username(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.password.label(class="form-label") }}
+            {{ form.password(class="form-control") }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
 {% endblock %}
