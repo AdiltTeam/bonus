@@ -3,46 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qeydiyyat - Kamera</title>
+    <title>Register with Camera</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Şəkil çəkin və üzünüzü tanıtın</h1>
-    <video id="video" width="640" height="480" autoplay></video>
-    <button onclick="takePicture()">Şəkil çək</button>
-
-    <form action="/register" method="post" enctype="multipart/form-data" id="image-form">
-        <input type="file" name="image" id="image" style="display: none;">
-        <input type="submit" value="Yükle" style="display: none;" id="submit-btn">
-    </form>
-
+    <div class="container">
+        <h2 class="mt-5">Register with Camera</h2>
+        <video id="video" width="640" height="480" autoplay></video>
+        <button id="capture" class="btn btn-primary mt-3">Capture Face</button>
+        <br><br>
+        <a href="{{ url_for('index') }}">Back to Home</a>
+    </div>
     <script>
-        var video = document.getElementById('video');
+        // Camera functionality here
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('capture');
+        
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function (stream) {
-                    video.srcObject = stream;
-                });
-        }
-
-        function takePicture() {
-            var canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            var dataUrl = canvas.toDataURL('image/png');
-            var imageInput = document.getElementById('image');
-            var submitBtn = document.getElementById('submit-btn');
-
-            // Şəkli formaya əlavə et
-            var base64Data = dataUrl.split(',')[1];
-            var blob = fetch(`data:image/png;base64,${base64Data}`).then(res => res.blob());
-            blob.then(b => {
-                var file = new File([b], 'image.png', { type: 'image/png' });
-                var formData = new FormData();
-                formData.append('image', file);
-                document.getElementById('image-form').submit();
+            .then(function (stream) {
+                video.srcObject = stream;
+            })
+            .catch(function (err) {
+                console.log("An error occurred: " + err);
             });
         }
+
+        captureButton.addEventListener('click', function() {
+            // Capture logic will be added here (face encoding)
+            alert('Capture logic goes here!');
+        });
     </script>
 </body>
 </html>
