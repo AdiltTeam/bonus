@@ -1,13 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qeydiyyat</title>
-</head>
-<body>
-    <h1>Ad və Soyadınızı daxil edin</h1>
-    <form action="/submit_registration" method="POST">
+{% extends 'base.html' %}
+
+{% block title %}Qeydiyyat{% endblock %}
+
+{% block content %}
+    <h2>Ad və Soyad Daxil Et</h2>
+    <form action="{{ url_for('submit_registration') }}" method="POST">
         <label for="first_name">Ad:</label>
         <input type="text" id="first_name" name="first_name" required><br><br>
 
@@ -16,5 +13,5 @@
 
         <input type="submit" value="Qeydiyyat">
     </form>
-</body>
-</html>
+    <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Yüklənmiş Şəkil">
+{% endblock %}
