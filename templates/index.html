@@ -1,69 +1,9 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}Ana Səhifə{% endblock %}
 
 {% block content %}
-    <h2 class="mb-4">Login Panel</h2>
-
-    <!-- Klassik login formu -->
-    <form method="POST">
-        {{ form.hidden_tag() }}
-
-        <div class="mb-3">
-            {{ form.username.label(class="form-label") }}
-            {{ form.username(class="form-control") }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.password.label(class="form-label") }}
-            {{ form.password(class="form-control") }}
-        </div>
-
-        <button type="submit" class="btn btn-primary">Login</button>
-    </form>
-
-    <hr class="my-4">
-
-    <!-- Üz tanıma ilə giriş -->
-    <h5>və ya üz tanıma ilə daxil olun:</h5>
-    <button id="faceLoginBtn" class="btn btn-success">Üz Tanıma ilə Giriş</button>
-
-    <video id="video" width="320" height="240" autoplay style="display: none;" class="mt-3"></video>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    const faceLoginBtn = document.getElementById('faceLoginBtn');
-    const video = document.getElementById('video');
-
-    faceLoginBtn.addEventListener('click', async () => {
-        video.style.display = 'block';
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = 320;
-        canvas.height = 240;
-
-        // 2 saniyə sonra şəkil çək
-        setTimeout(async () => {
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            stream.getTracks().forEach(track => track.stop()); // kameranı bağla
-
-            const imageData = canvas.toDataURL('image/jpeg');
-
-            const response = await fetch('/face_login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: imageData })
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                window.location.href = "/dashboard";
-            } else {
-                alert("Üz tanıma ilə giriş uğursuz oldu!");
-            }
-        }, 2000);
-    });
-</script>
+    <h2>Saytımıza Xoş Gəlmisiniz!</h2>
+    <p>Üz tanıma və qeydiyyat funksiyası üçün aşağıdakı linkdən istifadə edə bilərsiniz.</p>
+    <a href="{{ url_for('register') }}" class="btn btn-primary">Qeydiyyat</a>
 {% endblock %}
