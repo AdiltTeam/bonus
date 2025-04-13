@@ -16,8 +16,7 @@ pymysql>=1.1.1
 flask-sse>=1.0.0
 redis>=5.2.0
 flask-bootstrap>=3.3.7.1
-pip install cmake
-pip install dlib==19.22.0
-pip install face_recognition
-pip install --upgrade pip
-pip install --upgrade poetry
+cmake
+dlib==19.22.0
+face_recognition
+
