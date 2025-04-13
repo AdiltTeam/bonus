@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
 
-{% block title %}Ana Səhifə{% endblock %}
-
 {% block content %}
-    <h2>Saytımıza Xoş Gəlmisiniz!</h2>
-    <p>Üz tanıma və qeydiyyat funksiyası üçün aşağıdakı linkdən istifadə edə bilərsiniz.</p>
-    <a href="{{ url_for('register') }}" class="btn btn-primary">Qeydiyyat</a>
+    <div class="container">
+        <h1 class="mt-5">Welcome to the Face Recognition App</h1>
+        <p>Use the navigation menu to register with your image or with the camera.</p>
+    </div>
 {% endblock %}
