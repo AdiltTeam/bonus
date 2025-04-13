@@ -3,6 +3,7 @@ name = "repl-nix-bonusmanager360"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
+
 dependencies = [
     "email-validator>=2.2.0",
     "flask==2.2.5",
@@ -20,8 +21,8 @@ dependencies = [
     "flask-sse>=1.0.0",
     "redis>=5.2.0",
     "flask-bootstrap>=3.3.7.1",
-    "dlib==19.22.1"
-    "cmake==3.21.1"
-    "face_recognition==1.3.0"
-
+    "dlib==19.22.1",  # Dlib əlavə edilib
+    "cmake==3.21.1",  # CMake əlavə edilib
+    "face_recognition==1.3.0"  # Face Recognition əlavə edilib
 ]
+
